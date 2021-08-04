@@ -124,7 +124,7 @@ class ThingsboardClient {
     try {
       var decodedToken = JwtDecoder.decode(jwtToken);
       user = AuthUser.fromJson(decodedToken);
-    } on Exception catch (e) {
+    } catch (e) {
       print("Not a valid thinsboard token");
     }
     
