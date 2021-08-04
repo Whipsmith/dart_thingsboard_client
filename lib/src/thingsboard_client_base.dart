@@ -110,14 +110,34 @@ class ThingsboardClient {
     } else {
       _token = jwtToken;
       _refreshToken = refreshToken;
-      var decodedToken = JwtDecoder.decode(jwtToken);
-      _authUser = AuthUser.fromJson(decodedToken);
+      _authUser = await _createUserWithToken(jwtToken);
       await _storage.setItem('jwt_token', jwtToken);
       await _storage.setItem('refresh_token', refreshToken!);
     }
     if (notify == true) {
       _userLoaded();
     }
+  }
+
+  Future<AuthUser> _createUserWithToken(String jwtToken) async {
+    var user;
+    try {
+      var decodedToken = JwtDecoder.decode(jwtToken);
+      user = AuthUser.fromJson(decodedToken);
+    } on Exception catch (e) {
+      print("Not a valid thinsboard token");
+    }
+    
+    user ??= _fetchUserDetails(jwtToken);
+    
+    return user;
+  }
+
+  Future<AuthUser> _fetchUserDetails(String jwtToken) async {
+    var headers = {'Authorization': jwtToken};
+    var options = Options(headers: headers);
+    var response = await post<AuthUser>('/api/auth/user', options: options);
+    return response.data!;
   }
 
   bool _isTokenValid(String? jwtToken) {
@@ -530,4 +550,5 @@ class ThingsboardClient {
         TelemetryWebsocketService(this, _apiEndpoint);
     return _telemetryWebsocketService!;
   }
+  
 }
